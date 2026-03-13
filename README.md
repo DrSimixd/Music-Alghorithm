@@ -1,6 +1,6 @@
 # Music-Algorithm
 
-A Python CLI tool that analyzes Spotify playlists and generates DJ-style mixing recommendations. It fetches track audio features, scores pairwise compatibility, reorders tracks for smooth transitions, and outputs per-transition mixing parameters that match Spotify's **Edit Transition** UI.
+A CLI tool that analyzes Spotify playlists and generates DJ-style mixing recommendations. It fetches track audio features, scores pairwise compatibility, reorders tracks for smooth transitions, and outputs per-transition mixing parameters that match Spotify's **Edit Transition** UI.
 
 ## Features
 
@@ -11,27 +11,45 @@ A Python CLI tool that analyzes Spotify playlists and generates DJ-style mixing 
 - **Transition recommendations** — volume type, EQ, filter, style, and mix-out timing per transition
 - **JSON export** — machine-readable output for further processing
 
-## Requirements
+---
 
-- Python 3.8+
-- A [Spotify Developer](https://developer.spotify.com/dashboard) app (Client ID + Secret)
+## Option A — Windows Executable (no Python required)
 
-## Setup
+1. Download or clone the project on a Windows machine
+2. Run `build.bat` — it installs everything and produces `dist\music-algorithm.exe`
+3. Open `dist\.env` and fill in your [Spotify credentials](https://developer.spotify.com/dashboard)
+4. Run the exe:
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure Spotify credentials
-cp .env.example .env
-# Edit .env and fill in your SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
+```bat
+dist\music-algorithm.exe https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
+dist\music-algorithm.exe <playlist_url> --arc --json transitions.json
 ```
 
-## Usage
+The first run opens a browser for Spotify OAuth2. The `.env` and `.cache` (token) files are always read from the same folder as the exe.
+
+> **Note:** `build.bat` requires Python + pip on the build machine. The resulting `.exe` can then be distributed and run without Python.
+
+---
+
+## Option B — Run with Python
+
+**Requirements:** Python 3.8+, a [Spotify Developer](https://developer.spotify.com/dashboard) app
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env
+# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI
+```
 
 ```bash
 python main.py <playlist_url_or_id> [options]
 ```
+
+---
+
+## Usage
+
+Same options for both the exe and the Python script:
 
 | Option | Description |
 |--------|-------------|
@@ -44,16 +62,16 @@ python main.py <playlist_url_or_id> [options]
 
 ```bash
 # Analyze and reorder a playlist
-python main.py https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
+music-algorithm.exe https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
 
 # Energy arc with JSON export
-python main.py 37i9dQZF1DXcBWIGoYBM5M --arc --json transitions.json
+music-algorithm.exe 37i9dQZF1DXcBWIGoYBM5M --arc --json transitions.json
 
 # Fast mode, keep original order
-python main.py 37i9dQZF1DXcBWIGoYBM5M --fast --no-reorder
+music-algorithm.exe 37i9dQZF1DXcBWIGoYBM5M --fast --no-reorder
 ```
 
-The first run will open a browser for Spotify OAuth2 authentication. A `.cache` file stores the token for subsequent runs.
+---
 
 ## How It Works
 
@@ -63,34 +81,7 @@ The first run will open a browser for Spotify OAuth2 authentication. A `.cache` 
 4. **Mix** — generates transition parameters for each consecutive track pair
 5. **Output** — displays a formatted tracklist and transition guide in the terminal
 
-## Building the Windows Executable
-
-You can produce a standalone `music-algorithm.exe` that requires no Python installation.
-
-**Prerequisites:** Python 3.8+ and pip installed on a Windows machine.
-
-```bat
-# 1. Clone/copy the project to your Windows machine, then run:
-build.bat
-```
-
-`build.bat` will:
-1. Install all dependencies including PyInstaller
-2. Build `dist\music-algorithm.exe`
-3. Copy `.env.example` to `dist\.env`
-
-**After the build:**
-1. Open `dist\.env` and fill in your Spotify credentials
-2. Run the exe from the same `dist\` folder:
-
-```bat
-dist\music-algorithm.exe https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
-dist\music-algorithm.exe <playlist_url> --arc --json transitions.json
-```
-
-The `.env` and `.cache` (OAuth token) files are always read from the same directory as the exe.
-
-> **Note:** PyInstaller cannot cross-compile — the `.exe` must be built on Windows.
+---
 
 ## License
 
