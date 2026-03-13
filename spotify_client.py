@@ -9,7 +9,9 @@ Requires environment variables:
 
 import os
 import re
+import sys
 import time
+from pathlib import Path
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -17,7 +19,10 @@ from spotipy.oauth2 import SpotifyOAuth
 from models import Track
 from camelot import spotify_key_to_camelot
 
-load_dotenv()
+# When running as a PyInstaller .exe, resolve .env and .cache relative to the
+# executable's directory rather than the (temporary) extraction directory.
+_BASE_DIR: Path = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path.cwd()
+load_dotenv(dotenv_path=_BASE_DIR / ".env")
 
 _SCOPE = "playlist-read-private playlist-read-collaborative"
 _BATCH = 100  # Spotify max per API call
@@ -30,7 +35,7 @@ def _build_client() -> spotipy.Spotify:
         redirect_uri=os.environ.get("SPOTIFY_REDIRECT_URI", "http://localhost:8888/callback"),
         scope=_SCOPE,
         open_browser=True,
-        cache_path=".cache",
+        cache_path=str(_BASE_DIR / ".cache"),
     )
     return spotipy.Spotify(auth_manager=auth_manager)
 

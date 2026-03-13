@@ -63,6 +63,35 @@ The first run will open a browser for Spotify OAuth2 authentication. A `.cache` 
 4. **Mix** — generates transition parameters for each consecutive track pair
 5. **Output** — displays a formatted tracklist and transition guide in the terminal
 
+## Building the Windows Executable
+
+You can produce a standalone `music-algorithm.exe` that requires no Python installation.
+
+**Prerequisites:** Python 3.8+ and pip installed on a Windows machine.
+
+```bat
+# 1. Clone/copy the project to your Windows machine, then run:
+build.bat
+```
+
+`build.bat` will:
+1. Install all dependencies including PyInstaller
+2. Build `dist\music-algorithm.exe`
+3. Copy `.env.example` to `dist\.env`
+
+**After the build:**
+1. Open `dist\.env` and fill in your Spotify credentials
+2. Run the exe from the same `dist\` folder:
+
+```bat
+dist\music-algorithm.exe https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
+dist\music-algorithm.exe <playlist_url> --arc --json transitions.json
+```
+
+The `.env` and `.cache` (OAuth token) files are always read from the same directory as the exe.
+
+> **Note:** PyInstaller cannot cross-compile — the `.exe` must be built on Windows.
+
 ## License
 
 MIT
