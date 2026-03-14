@@ -139,13 +139,18 @@ def _apply_energy_arc(tracks: list[Track], order: list[int]) -> list[int]:
 # Public API
 # ---------------------------------------------------------------------------
 
-def order_tracks(tracks: list[Track], use_arc: bool = False) -> list[Track]:
+def order_tracks(
+    tracks: list[Track],
+    use_arc: bool = False,
+    on_progress: callable | None = None,
+) -> list[Track]:
     """
     Reorder tracks for the smoothest possible DJ-style transitions.
 
     Args:
         tracks: List of Track objects to reorder.
         use_arc: If True, enforce energy arc (build → peak → cool).
+        on_progress: Optional callback(message: str) for progress updates.
 
     Returns:
         New list of Track objects in optimized order.
@@ -153,25 +158,27 @@ def order_tracks(tracks: list[Track], use_arc: bool = False) -> list[Track]:
     if len(tracks) <= 1:
         return tracks
 
-    print("Building compatibility matrix...")
+    _log = on_progress or print
+
+    _log("Building compatibility matrix...")
     matrix = build_score_matrix(tracks)
 
-    print("Ordering tracks (greedy nearest-neighbor)...")
+    _log("Ordering tracks (greedy nearest-neighbor)...")
     order = _greedy_order(tracks, matrix)
 
     if len(tracks) <= 200:
-        print("Refining with 2-opt local search...")
+        _log("Refining with 2-opt local search...")
         order = _two_opt(order, matrix)
     else:
-        print("Refining with simulated annealing (large playlist)...")
+        _log("Refining with simulated annealing (large playlist)...")
         order = _simulated_annealing(order, matrix)
 
     if use_arc:
-        print("Applying energy arc constraint...")
+        _log("Applying energy arc constraint...")
         order = _apply_energy_arc(tracks, order)
 
     score = _total_score(order, matrix)
     max_possible = (len(tracks) - 1) * 1.0
-    print(f"Ordering score: {score:.2f} / {max_possible:.2f} ({score/max_possible*100:.0f}%)\n")
+    _log(f"Ordering score: {score:.2f} / {max_possible:.2f} ({score/max_possible*100:.0f}%)")
 
     return [tracks[i] for i in order]

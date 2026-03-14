@@ -91,26 +91,36 @@ def _fetch_audio_analysis(sp: spotipy.Spotify, track_id: str) -> dict:
         return {}
 
 
-def fetch_playlist(url_or_id: str, fast: bool = False) -> list[Track]:
+def fetch_playlist(
+    url_or_id: str,
+    fast: bool = False,
+    sp: spotipy.Spotify | None = None,
+    on_progress: callable | None = None,
+) -> list[Track]:
     """
     Fetch a Spotify playlist and return a list of Track objects.
 
     Args:
         url_or_id: Spotify playlist URL or bare playlist ID.
         fast: If True, skip per-track audio_analysis calls (no mixout timing).
+        sp: Optional pre-authenticated Spotify client (for web UI).
+            If None, builds a client from .env credentials (CLI mode).
+        on_progress: Optional callback(message: str) for progress updates.
 
     Returns:
         List of Track objects ordered as they appear in the playlist.
     """
-    sp = _build_client()
+    if sp is None:
+        sp = _build_client()
     playlist_id = _parse_playlist_id(url_or_id)
 
-    print(f"Fetching playlist {playlist_id}...")
+    _log = on_progress or print
+    _log(f"Fetching playlist {playlist_id}...")
     raw_tracks = _fetch_all_items(sp, playlist_id)
-    print(f"  Found {len(raw_tracks)} tracks")
+    _log(f"  Found {len(raw_tracks)} tracks")
 
     track_ids = [t["id"] for t in raw_tracks]
-    print("Fetching audio features...")
+    _log("Fetching audio features...")
     features_map = _fetch_audio_features(sp, track_ids)
 
     tracks: list[Track] = []
@@ -118,7 +128,7 @@ def fetch_playlist(url_or_id: str, fast: bool = False) -> list[Track]:
         tid = raw["id"]
         feat = features_map.get(tid)
         if feat is None:
-            print(f"  Warning: no audio features for '{raw['name']}', skipping")
+            _log(f"  Warning: no audio features for '{raw['name']}', skipping")
             continue
 
         key = feat.get("key", -1)
@@ -131,7 +141,7 @@ def fetch_playlist(url_or_id: str, fast: bool = False) -> list[Track]:
         beats: list[dict] = []
         if not fast:
             # Rate-limit: Spotify allows ~1 audio_analysis call/sec before throttling
-            print(f"  [{i+1}/{len(raw_tracks)}] Fetching analysis: {raw['name'][:40]}")
+            _log(f"  [{i+1}/{len(raw_tracks)}] Fetching analysis: {raw['name'][:40]}")
             analysis = _fetch_audio_analysis(sp, tid)
             sections = analysis.get("sections", [])
             beats = analysis.get("beats", [])
@@ -154,5 +164,5 @@ def fetch_playlist(url_or_id: str, fast: bool = False) -> list[Track]:
             beats=beats,
         ))
 
-    print(f"Ready: {len(tracks)} tracks loaded.\n")
+    _log(f"Ready: {len(tracks)} tracks loaded.")
     return tracks
